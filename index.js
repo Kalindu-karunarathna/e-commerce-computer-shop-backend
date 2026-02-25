@@ -3,21 +3,24 @@ import mongoose from "mongoose";
 import userRouter from "./routes/userRoutes.js";
 import jwt from "jsonwebtoken";
 import productRouter from "./routes/productRouter.js"
+import cors from "cors"
 
 
 
-//connect to mongodb database
+//connect to mongodb database mongodb+srv://admin:<db_password>@cluster0.lzlrdvj.mongodb.net/?appName=Cluster0
 const mongodbUrl = "mongodb+srv://admin:1234@cluster0.lzlrdvj.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(mongodbUrl).then(
     ()=>{
         console.log("connected to mongodb");
     }
-);
+).catch(err => console.log("mongo err",err));
 
 
 const app = express()
 const port = 3000
+
+app.use(cors()) //to avoid blocking api calls 
 
 app.use(express.json())
 
@@ -60,8 +63,8 @@ app.use((req,res,next)=>{
 
 
 
-app.use("/users",userRouter)
-app.use("/products",productRouter)
+app.use("/api/users",userRouter)
+app.use("/api/products",productRouter)
 
 
 
