@@ -4,11 +4,12 @@ import userRouter from "./routes/userRoutes.js";
 import jwt from "jsonwebtoken";
 import productRouter from "./routes/productRouter.js"
 import cors from "cors"
+import dotenv from "dotenv"
 
+dotenv.config() //use data inside the environment varable file
 
-
-//connect to mongodb database mongodb+srv://admin:<db_password>@cluster0.lzlrdvj.mongodb.net/?appName=Cluster0
-const mongodbUrl = "mongodb+srv://admin:1234@cluster0.lzlrdvj.mongodb.net/?appName=Cluster0";
+//connect to mongodb database 
+const mongodbUrl = process.env.MONGO_URL
 
 mongoose.connect(mongodbUrl).then(
     ()=>{
@@ -36,7 +37,7 @@ app.use((req,res,next)=>{
     //if there is token, remove the Bearer part
     if (authorizationHeader!=null){
         const token = authorizationHeader.replace("Bearer ","")   
-        jwt.verify(token,"secretKey96$2025",(error,content)=>{  //verify the token and get the content in the token
+        jwt.verify(token,process.env.JWT_KEY,(error,content)=>{  //verify the token and get the content in the token
             
             if (content==null){
                 console.log("invalid access")

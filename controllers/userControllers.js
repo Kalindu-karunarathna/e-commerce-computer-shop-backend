@@ -62,7 +62,7 @@ export function loginUser(req,res){
                         image:user.image
                     };
 
-                    const token = jwt.sign(payload,"secretKey96$2025",{
+                    const token = jwt.sign(payload,process.env.JWT_KEY,{
                         expiresIn:"150h"
                     });
 
