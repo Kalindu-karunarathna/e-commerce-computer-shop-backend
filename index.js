@@ -41,7 +41,7 @@ app.use((req,res,next)=>{
             
             if (content==null){
                 console.log("invalid access")
-                res.json({
+                res.status(401).json({
                     message: "invalid token"
                 })
                 return  //if token is invalid, return...otherwise else part and next() will execute
