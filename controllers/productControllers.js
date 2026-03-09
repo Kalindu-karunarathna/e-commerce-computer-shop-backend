@@ -23,9 +23,11 @@ export function createProduct(req,res){
             })
         }).catch(       //detect if there is any failure or error in server while save product
             (error)=>{
+                console.log(error)
                 res.status(500).json({
                     message : "error creating product",
-                    error : error.message
+                    error : error.message,
+                    
                 })
             }
         )
