@@ -29,7 +29,7 @@ export async function createOrder(req,res){
         const items = [];
         let total = 0;
 
-        for(i=0;i<req.body.items.length;i++){
+        for(let i=0;i<req.body.items.length;i++){
 
             const product = await Product.findOne({productId:req.body.items[i].productId});
 
@@ -86,6 +86,7 @@ export async function createOrder(req,res){
         });
 
     }catch(error){
+        
         return res.status(500).json({
             message:"error placing order",
             error:error.message,

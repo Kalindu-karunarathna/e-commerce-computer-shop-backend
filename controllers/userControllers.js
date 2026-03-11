@@ -45,7 +45,7 @@ export function loginUser(req,res){
     User.find({email:email}).then(
         (users)=>{
             if(users[0]==null){     //if there is no email in database that equal to user entered email when login
-                res.json(              //respond user not found
+                res.status(404).json(              //respond user not found
                     {message:"user not found!"}
                 )
             }
