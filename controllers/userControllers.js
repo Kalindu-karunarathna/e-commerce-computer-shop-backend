@@ -12,9 +12,7 @@ export function createUser(req,res){
     const data = req.body;
     //hashing the user password before save in database
     const hashPassword = bcrypt.hashSync(data.password,10);
-    res.json(
-        {hashPassword}
-    );
+    
 
     //get the data of request that sent through login form and create newUser object
     const newUser = new User({
