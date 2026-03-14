@@ -73,6 +73,7 @@ export function loginUser(req,res){
                          role:user.role           
                         }
                     )
+                    console.log(token)
                 }
                 //if password was wrong respond invalid password
                 else{
