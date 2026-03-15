@@ -20,7 +20,7 @@ export function createUser(req,res){
         password : hashPassword,
         firstName : data.firstName,
         lastName : data.lastName,
-        role : data.role
+       
     })
 
     //save the newUser object in database and respond a message that mentioned user is successfully created
