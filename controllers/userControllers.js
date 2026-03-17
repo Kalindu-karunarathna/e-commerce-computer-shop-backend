@@ -3,8 +3,22 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
 import axios from "axios";
+import nodemailer from "nodemailer";
+import Otp from "../models/otp.js";
 
 dotenv.config()
+
+
+const transporter = nodemailer.createTransport({
+    service:"gmail",
+    host:"smtp.gmail.com",
+    port:587,
+    secure:false,
+    auth:{
+        user:"computechecommercecomputershop@gmail.com",
+        pass:process.env.GMAIL_APP_PASSWORD
+    }
+})
 
 
 //function for create users
@@ -194,3 +208,100 @@ export async function GoogleLogin(req,res){
     });
 }
 } 
+
+
+export async function validateOtpAndUpdatePassword(req,res){
+    try{
+        const otp = req.body.otp;
+        const newPassword = req.body.password;
+        const email = req.body.email;
+
+        const otpRecord = await otp.findOne({email:email,otp:otp});
+
+        if(otpRecord==null){
+            res.status(400).json({
+                message:"invalid OTP"
+            })
+            return;
+        }
+
+        await Otp.deleteMany({email:email});
+
+        const hashedPassword =bcrypt.hashSync(newPassword,10);
+
+        await User.updateOne({email:email},
+            {$set:{password:hashedPassword,isEmailVerified:true}}
+        )
+        res.json({
+            message:"password update successfully"
+        });
+    }
+    catch(err){
+        res.status(500).json({
+            message:"failed to update password",
+            error:err.message
+        });
+    }
+}
+
+
+
+export async function sendOTP(){
+
+    try{
+
+    const email = req.params.email
+
+    const user = await User.findOne({
+        email:email
+    })
+
+    if(user===null){
+        res.status(404).json({
+            message:"user not found"
+        })
+        return
+    }
+
+    await Otp.deleteMany({
+        email:email
+    });
+
+    const otpCode = Math.floor(100000+Math.random()*900000).toString();
+
+    const otp = new Otp({
+        email:email,
+        otp:otpCode
+    });
+
+    await otp.save();
+
+    const message ={
+        from:"computechecommercecomputershop@gmail.com",
+        to:email,
+        subject:"your OTP code.",
+        text:"your OTP code is "+otpCode,
+
+    }
+
+    transporter.sendMail(message,(err,info)=>{
+        if(err){
+            res.status(500).json({
+                message:"failed to send OTP",
+                error:err.message
+            })
+        }
+        else{
+            res.json({
+                message:"OTP send successfully"
+            })
+        }
+    })
+    }
+    catch(err){
+        res.status(500).json({
+            message:"failed to send otp",
+            error:err.message
+        })
+    }
+}
