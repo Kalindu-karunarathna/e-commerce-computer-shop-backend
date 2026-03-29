@@ -7,7 +7,7 @@ userRouter.post("/",createUser)
 userRouter.post("/login",loginUser)
 userRouter.get("/",getUser)
 userRouter.post("/google-login",GoogleLogin)
-userRouter.get("/send-otp/:email",sendOTP)
+userRouter.post("/send-otp",sendOTP)
 userRouter.post("/validate-otp",validateOtpAndUpdatePassword)
 
 export default userRouter;

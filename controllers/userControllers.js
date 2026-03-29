@@ -212,22 +212,21 @@ export async function GoogleLogin(req,res){
 
 export async function validateOtpAndUpdatePassword(req,res){
     try{
-        const otp = req.body.otp;
-        const newPassword = req.body.password;
-        const email = req.body.email;
+        const otp = req.body.otp.trim();
+        const newPassword = req.body.newPassword;
+        const email = req.body.email.trim();
 
-        const otpRecord = await otp.findOne({email:email,otp:otp});
+        const otpRecord = await Otp.findOne({email:email,otp:otp});
 
-        if(otpRecord==null){
-            res.status(400).json({
-                message:"invalid OTP"
-            })
-            return;
+        if (!otpRecord || otpRecord.expiresAt < Date.now()) {
+            return res.status(400).json({
+                message: "OTP expired or invalid"
+            });
         }
 
         await Otp.deleteMany({email:email});
 
-        const hashedPassword =bcrypt.hashSync(newPassword,10);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         await User.updateOne({email:email},
             {$set:{password:hashedPassword,isEmailVerified:true}}
@@ -246,11 +245,11 @@ export async function validateOtpAndUpdatePassword(req,res){
 
 
 
-export async function sendOTP(){
+export async function sendOTP(req,res){
 
     try{
 
-    const email = req.params.email
+    const email = req.body.email.trim()
 
     const user = await User.findOne({
         email:email
@@ -269,31 +268,32 @@ export async function sendOTP(){
 
     const otpCode = Math.floor(100000+Math.random()*900000).toString();
 
-    const otp = new Otp({
+    const otpDoc = new Otp({
         email:email,
-        otp:otpCode
+        otp:otpCode,
+        expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
     });
 
-    await otp.save();
+    await otpDoc.save();
 
     const message ={
         from:"computechecommercecomputershop@gmail.com",
         to:email,
         subject:"your OTP code.",
-        text:"your OTP code is "+otpCode,
+        text: `Your OTP code is ${otpCode}. It will expire in 5 minutes.`,
 
     }
 
     transporter.sendMail(message,(err,info)=>{
         if(err){
-            res.status(500).json({
+            return res.status(500).json({
                 message:"failed to send OTP",
                 error:err.message
             })
         }
         else{
-            res.json({
-                message:"OTP send successfully"
+            return res.json({
+                message:"OTP sent successfully"
             })
         }
     })
