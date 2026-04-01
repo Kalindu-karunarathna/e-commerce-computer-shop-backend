@@ -64,12 +64,21 @@ export function loginUser(req,res){
             }
             else{
                 const user = users[0] //if email found, get the user
+
+                console.log("Blocked status:", user.isBlocked, "email:", user.email);
+                if(user.isBlocked){
+                    res.status(403).json({
+                        message : "user is blocked..contact admin.."
+                    });
+                    return;
+                }
                 
                 const isPasswordCorrect = bcrypt.compareSync(password,user.password) // check if entered password correct or not
 
                 //if password correct,create token when user login
                 if(isPasswordCorrect){
                     const payload={
+                        id: user._id.toString(),
                         email:user.email,
                         firstName:user.firstName,
                         lastName:user.lastName,
@@ -177,6 +186,14 @@ export async function GoogleLogin(req,res){
                     )
 
         }else{
+
+            if(user.isBlocked){
+                    res.status(403).json({
+                        message : "user is blocked..contact admin.."
+                    });
+                    return;
+                }
+
             const payload={
                         email:user.email,
                         firstName:user.firstName,
@@ -303,5 +320,76 @@ export async function sendOTP(req,res){
             message:"failed to send otp",
             error:err.message
         })
+    }
+}
+
+
+
+export async function getAllUsers(req,res){
+    if(!isAdmin){
+        res.status(401).json({
+            message : "Unauthorized"
+        })
+        return;
+    }
+
+    try{
+        const users = await User.find()
+        res.json(users)
+    }
+    catch(err){
+        res.status(500).json({
+            message : "error fetching users..",
+            error : err.message
+        })
+    }
+}
+
+
+
+
+
+export async function toggleBlockUser(req, res) {
+    // ✅ check admin first
+    if (!isAdmin(req)) {
+        return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    try {
+        const userId = req.params.id;
+        const { isBlocked } = req.body;
+
+        // ✅ prevent self-block
+        if (req.user.id === userId) {
+            return res.status(400).json({ message: "You cannot block yourself" });
+        }
+
+        // ✅ fetch user first
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        
+
+        // ✅ prevent blocking another admin
+        if (user.role === "admin") {
+            console.log("req.user.id:", req.user.id);
+
+            return res.status(400).json({ message: "Cannot block another admin" });
+        }
+
+        // ✅ now update
+        user.isBlocked = isBlocked;
+        await user.save();
+
+        res.json({
+            message: isBlocked ? "User blocked" : "User unblocked",
+            user
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
     }
 }
